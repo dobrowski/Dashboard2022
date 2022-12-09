@@ -8,6 +8,8 @@ library(googlesheets4)
 
 con <- mcoe_sql_con()
 
+gsheet <- "https://docs.google.com/spreadsheets/d/1J6SYEaGQJrNfYKegi7HZ_NgjMvYXgFa2fCaMxZK-U7M/edit#gid=0"
+
 
 dash_census <- tbl(con, "DASH_CENSUS") %>% 
     filter(countyname == "Monterey",
@@ -40,4 +42,4 @@ groups <- bind_rows(groups,foster) %>%
     select(districtname, studentgroup)
 
 
-write_sheet(groups, "https://docs.google.com/spreadsheets/d/1J6SYEaGQJrNfYKegi7HZ_NgjMvYXgFa2fCaMxZK-U7M/edit#gid=0")
+write_sheet(groups, gsheet)
