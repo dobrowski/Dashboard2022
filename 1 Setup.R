@@ -5,6 +5,9 @@ library(tidyverse)
 library(MCOE)
 library(googlesheets4)
 
+library(RColorBrewer)
+library(ggtext)
+library(glue)
 
 con <- mcoe_sql_con()
 

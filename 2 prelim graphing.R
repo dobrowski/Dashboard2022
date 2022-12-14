@@ -8,8 +8,9 @@ prelim <- read_sheet(gsheet) %>%
 
 
 
-purp.pal <- c( "5" ='#f2f0f7',"4" ='#cbc9e2', "3" ='#9e9ac8',"2" ='#756bb1',"1" ='#54278f', "NA" = "#FFFFFF")
-da.pal <- c("DA" = "Red", "Not"= "White")
+purp.pal <- c( "5" ='#dadaeb',"4" ='#bcbddc', "3" ='#807dba',"2" ='#6a51a3',"1" ='#3f007d', "NA" = "#FFFFFF")
+da.pal <- c("DA" = "Red", "Not"= "Black")
+bw.pal <- c("white" = "white", "black" = "black")
 
 
 
@@ -42,7 +43,10 @@ ggplot(speck) +
     geom_tile(aes(y = definition,  # Student group
                   x = name,  # Indicator
                   fill = as.factor(value),   # Status rating
-                  color = as.factor(`DA Eligible`)),
+                  color = as.factor(`DA Eligible`), 
+                  width=0.95, # width and heigth are adjusted to allow the color borders to go fully around
+                  height=0.95
+                  ),
                   lwd = .75,
                   ) +
     mcoe_theme +
