@@ -138,6 +138,21 @@ da.list <- dash.mry  %>%
 dash.mry.da <- left_join(dash.mry, da.list)
 
 
+da.groups <- dash.mry.da %>%
+    filter(DA.eligible == "DA",
+           statuslevel.orig == 1) %>%
+    select(studentgroup) %>%
+    unique() %>%
+    unlist()
+
+
+da.inds <- dash.mry.da %>%
+    filter(DA.eligible == "DA",
+           statuslevel.orig == 1) %>%
+    select(indicator) %>%
+    filter(indicator != "censusenrollrates") %>%
+    unique() %>%
+    unlist()
 
 
 ### Build historic table -----
@@ -349,7 +364,52 @@ doc <-    school_dir %>%
     
 }
 
-
+hist.lines <- function(group, indie){
+    
+    
+    
+    tit <- paste0( case_when(indie == "math" ~ "<img src='icons/2math.png' width='40' /> Math",
+                     indie == "chronic" ~ "<img src='icons/5chronic.png' width='40' /> Chronic Absenteeism",
+                     indie == "grad" ~ "<img src='icons/4grad.png' width='40' /> Graduation Rate",
+                     indie == "elpi" ~ "<img src='icons/3elpi.png' width='40' /> English Languague Progress (ELPI)",
+                     indie == "ela" ~ "<img src='icons/1ela.png' width='40' /> ELA",
+                     indie == "susp" ~ "<img src='icons/6suspend.png' width='40' /> Suspension",
+                     TRUE ~ indie) ,
+                            " Historical Rates for ",
+                            dist.name)
+    
+    
+    
+    
+    dash.hist %>%
+        filter(studentgroup %in% group,
+               indicator == indie) %>%
+        mutate(status = case_when(indie == "math" ~ currstatus,
+                     indie == "chronic" ~ currstatus/100,
+                     indie == "grad" ~ currstatus/100,
+                     indie == "elpi" ~ currstatus/100,
+                     indie == "ela" ~ currstatus,
+                     indie == "susp" ~ currstatus/100)) %>%
+    ggplot(aes(y = status,
+               group = studentgroup.long,
+               x = reportingyear,
+               color = studentgroup.long)) +
+        geom_line() +
+        geom_point()  +
+        mcoe_theme +
+        scale_color_few() + 
+        ggplot2::theme(plot.title.position = "plot",
+                       plot.title = element_markdown(size = 15)) +
+        {if(indie %notin% c("ela","math"))scale_y_continuous(breaks = scales::breaks_extended(8),
+                           labels = scales::percent,
+                           expand = expansion(c(0.1, 0.1))
+                           )} +
+  labs(title = tit,
+       #      caption = "https://www.cde.ca.gov/ta/ac/cm/index.asp",
+             color = "")
+    
+    
+}
 
 
 
@@ -438,7 +498,7 @@ print(p)
 
 ## Historical Graphs for Eligible Groups
 
-These graphs represent all of the indicators from Priority Areas that qualified the district in prior years. They included all qualifying subgroups on each graph, whether this was a qualifying indicator or not, as well as the All Students group for comparisons.
+These graphs represent all of the indicators from Priority Areas that qualified the district. They included all qualifying subgroups on each graph, whether this was a qualifying indicator or not, as well as the All Students group for comparisons.
 
 <details>
 
@@ -448,12 +508,20 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 #| echo: false
 #| warning: false
 #| fig-width: 7
-#| fig-height: 8
+#| fig-height: 6
 
 
 
+for (i in da.inds) {
+    
+p <- hist.lines(c("ALL",da.groups), i)
 
-indicator.bar(dash.mry.da, dist.name, "ela")
+print(p)    
+
+}
+
+
+
 
 
 ```
@@ -525,8 +593,8 @@ dash.mry.da %>%
     select(cds, districtname, studentgroup.long, currstatus, currdenom , indicator, ends_with("thresh"), pass.count, comper, adjective) %>%
     mutate(#sentence_short = glue("{studentgroup.long}  of {currdenom}"),
             sentence_full = ifelse(indicator %in% c("ela","math"),
-            glue("{studentgroup.long} student group should have an average of {thresh} from standard or higher based on the **{indicator}** CAASPP exam to not be in Red."),
-                glue("{studentgroup.long} student group should have {pass.count} {comper} students **{adjective}** based on the count in 2022 of {currdenom} to not be in Red.")
+            glue("*{studentgroup.long}* student group should have an average of {thresh} from standard or higher based on the **{indicator}** CAASPP exam to not be in Red."),
+                glue("*{studentgroup.long}* student group should have {pass.count} {comper} students **{adjective}** based on the count in 2022 of {currdenom} to not be in Red.")
     )
     ) %>%
     arrange(studentgroup.long,indicator) %>%
