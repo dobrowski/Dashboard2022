@@ -1,14 +1,12 @@
 
-library(RColorBrewer)
-library(ggtext)
-library(glue)
 
 prelim <- read_sheet(gsheet) %>%
     left_join_codebook("DASH_CENSUS", "studentgroup")
 
 
+purp.pal <- c( "5" ='#eeeeee',"4" ='#d9d2e9', "3" ='#9383bc',"2" ='#6c3f97',"1" ='#3b096b', "NA" = "#FFFFFF")
 
-purp.pal <- c( "5" ='#dadaeb',"4" ='#bcbddc', "3" ='#807dba',"2" ='#6a51a3',"1" ='#3f007d', "NA" = "#FFFFFF")
+#purp.pal <- c( "5" ='#dadaeb',"4" ='#bcbddc', "3" ='#807dba',"2" ='#6a51a3',"1" ='#3f007d', "NA" = "#FFFFFF")
 da.pal <- c("DA" = "Red", "Not"= "Black")
 bw.pal <- c("white" = "white", "black" = "black")
 

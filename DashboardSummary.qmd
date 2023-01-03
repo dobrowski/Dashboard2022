@@ -1,0 +1,550 @@
+---
+title: "`r params$dist` Dashboard DA Summary"
+format: html
+editor: visual
+params:
+    dist: '27661590000000'
+---
+
+```{r}
+#| include: false
+
+library(here)
+library(rmarkdown)
+library(knitr)
+library(tidyverse)
+library(glue)
+library(readxl)
+library(MCOE)
+library(ggthemes)
+library(reactable)
+library(googlesheets4)
+library(RColorBrewer)
+library(ggtext)
+library(glue)
+library(scales)
+
+
+options(scipen=999)
+
+
+dist <- params$dist
+
+dist.name <- mcoe_name(dist)
+
+
+con <- MCOE::mcoe_sql_con()
+
+sheet_id <- "https://docs.google.com/spreadsheets/d/1_EmvLQq-cUe8Ist_WYGJFgdjD27dajpfSbEd_djvbsc/edit#gid=0"
+
+
+purp.pal <- c( "5" ='#eeeeee',"4" ='#d9d2e9', "3" ='#9383bc',"2" ='#6c3f97',"1" ='#3b096b', "NA" = "#FFFFFF")
+
+
+bw.pal <- c("white" = "white", "black" = "black")
+
+da.pal <- c("DA" = "red", "Not"= "black")
+
+# grouper <- da.mry.grp %>%
+#     filter(CDS == dist) %>%
+#     select(name) %>%
+#     distinct() %>%
+#     unlist()
+
+# dist.name <- da.mry.grp %>%
+#     filter(CDS == dist) %>%
+#     select(LEAname) %>%
+#     distinct() %>%
+#     unlist()
+
+
+
+dash2 <- tbl(con,"DASH_ALL_2022") %>%
+     filter(countyname == "Monterey",
+           rtype == "D",
+           cds == dist) %>%
+    collect () %>%
+    mutate(indicator2 = recode(indicator,
+                               "ela" = "<br><img src='icons/1ela.png' width='40' /><br>4 -  ELA",
+                               "math" = "<br><img src='icons/2math.png' width='40' /><br>4 -  Math",
+                               "elpi" = "<br><img src='icons/3elpi.png' width='40' /><br>4 - ELPI",
+                               "grad" = "<br><img src='icons/4grad.png' width='40' /><br>5 - Grad",
+                               "chronic" = "<br><img src='icons/5chronic.png' width='40' /><br>5 - Chronic <br>Absenteeism",
+                               "susp" = "<br><img src='icons/6suspend.png' width='40' /><br>6 - Suspension"
+    ))
+
+
+
+dash.old <- tbl(con,"DASH_ALL") %>%
+     filter(countyname == "Monterey",
+           rtype == "D",
+          # cds == dist
+           ) %>%
+    collect () %>%
+    mutate(cds = as.numeric(cds)) %>%
+    filter(cds == dist) %>%
+    left_join_codebook("DASH_SUSP", "studentgroup") %>%
+    mutate(definition = recode(definition, "Student Group" = "English Learner")) %>% 
+    rename(studentgroup.long = definition)
+
+# %>%
+    # mutate(indicator2 = recode(indicator,
+    #                            "ela" = "<br><img src='icons/1ela.png' width='40' /><br>4 -  ELA",
+    #                            "math" = "<br><img src='icons/2math.png' width='40' /><br>4 -  Math",
+    #                            "elpi" = "<br><img src='icons/3elpi.png' width='40' /><br>4 - ELPI",
+    #                            "grad" = "<br><img src='icons/4grad.png' width='40' /><br>5 - Grad",
+    #                            "chronic" = "<br><img src='icons/5chronic.png' width='40' /><br>5 - Chronic <br>Absenteeism",
+    #                            "susp" = "<br><img src='icons/6suspend.png' width='40' /><br>6 - Suspension"
+#    )
+# )
+
+
+
+
+
+school_dir <- tbl(con, "SCHOOL_DIR") %>%
+    collect() %>%
+    rename("cds" = "cds_code")
+
+
+
+dash.mry <- dash2 %>%
+    filter(countyname == "Monterey",
+           rtype == "D")
+
+
+
+### Determine DA eligibility --------
+
+da.list <- dash.mry  %>%
+    select(districtname, studentgroup, statuslevel, indicator) %>%
+    pivot_wider(id_cols = c(districtname,studentgroup),
+                names_from = indicator,
+                values_from = statuslevel
+    ) %>%
+    transmute(districtname, 
+              studentgroup,
+              priority4 = case_when(ela == 1 & math == 1 ~ TRUE,
+                                    elpi == 1 ~ TRUE,
+                                    TRUE ~ FALSE),
+              priority5 = case_when(grad == 1 | chronic == 1 ~ TRUE,
+                                    TRUE ~ FALSE),
+              priority6 = case_when(susp == 1 ~ TRUE,
+                                    TRUE ~ FALSE),
+              DA.eligible  = case_when(priority4+priority5+priority6 >=2 ~ "DA",
+                                       TRUE ~ "Not")
+    )
+
+dash.mry.da <- left_join(dash.mry, da.list)
+
+
+
+
+### Build historic table -----
+
+
+dash.old2 <- dash.old %>%
+    select(cds = CDSCode,reportingyear = year, studentgroup, indicator = ind, currstatus, studentgroup.long) %>%
+    mutate(cds = as.character(cds),
+           reportingyear = as.numeric(reportingyear))
+
+
+dash.hist <- dash.mry.da %>%
+    bind_rows(dash.old2) 
+
+
+
+### Graphs -------
+
+
+
+dash.graph <- function(df, dist) {
+    
+
+    df %>%
+        filter(str_detect(districtname,dist),
+               statuslevel !=0,
+               !is.na(studentgroup.long)
+               ) %>%
+    ggplot() +
+        geom_tile(aes(y = reorder(studentgroup.long, desc(studentgroup.long)),  # Student group
+                      x = as.factor(indicator2),  # Indicator
+                      fill = factor(statuslevel, levels = c("1","2","3","4","5")),   # Status rating
+                     # color = "black",  # as.factor(`DA Eligible`), 
+                      width=0.95, # width and heigth are adjusted to allow the color borders to go fully around
+                      height=0.95
+        ),
+        lwd = .75,
+        color = "black"
+        )  +
+        ggthemes::theme_hc() +
+    ggplot2::theme(plot.title.position = "plot")    +
+        
+        theme(axis.text.x = element_markdown(color = "black", size = 11) ) +
+        scale_fill_manual(values = purp.pal,
+                          drop = FALSE) +
+  #      scale_color_manual( values = da.pal) +
+        labs(title = paste0("2022 Dashboard Status by Student Group for ",dist),
+             x = "",
+             y = ""
+        )  +
+        guides(fill = guide_legend(title = "Dashboard Status \nCell Phone Bars",
+                            title.position = "top",
+                            title.hjust = .5,
+                            label.position = "bottom",
+                            nrow = 1
+                            )
+        ) +
+        theme(legend.key.size = unit(2, 'cm' ))
+
+}
+
+
+dash.graph.da <- function(df, dist) {
+    
+
+    df %>%
+        filter(str_detect(districtname,dist),
+               statuslevel !=0,
+               !is.na(studentgroup.long)
+        ) %>%
+        mutate(`DA Eligible` = ifelse(DA.eligible =="DA" & statuslevel == 1 & studentgroup != "ALL", "DA", "Not"),
+               studentgroup.long = ifelse( DA.eligible=="DA" & studentgroup != "ALL",
+                                    glue("<span style='color:red'>{studentgroup.long}</span>"),
+                                    glue("<span style='color:black'>{studentgroup.long}</span>") # Used to make the axis labels red for DA groups
+               )
+               ) %>%
+        ggplot() +
+        geom_tile(aes(y = reorder(studentgroup.long, desc(studentgroup.long)),  # Student group
+                      x = as.factor(indicator2),  # Indicator
+                      fill = factor(statuslevel, levels = c("1","2","3","4","5")),   # Status rating
+                       color = as.factor(`DA Eligible`), 
+                      width=0.95, # width and height are adjusted to allow the color borders to go fully around
+                      height=0.95
+        ),
+        lwd = .75,
+ #       color = "black"
+        )  +
+        ggthemes::theme_hc() +
+        #           geom_text(size = 2, position = position_dodge(width = 1)),
+        ggplot2::theme(plot.title.position = "plot") +
+        theme(axis.text.x = element_markdown(color = "black", size = 11) ) +  # For Icons on axis
+        
+        scale_fill_manual(values = purp.pal,
+                          drop = FALSE) +
+        scale_color_manual( values = da.pal) +
+        labs(title = paste0("2022 Dashboard Status by Student Group for ",dist),
+             x = "",
+             y = ""
+        )  +
+        guides(color = guide_legend(title = "DA Eligible\n",   # Prettify the legends
+                                         title.position = "top",
+                                        title.hjust = .5,
+                                         label.position = "bottom"
+             ),
+            fill = guide_legend(title = "Dashboard Status \nCell Phone Bars",
+                                title.position = "top",
+                                title.hjust = .5,
+                                label.position = "bottom",
+                                nrow = 1)
+        ) +
+        theme(legend.key.size = unit(2, 'cm' )) +
+     theme(axis.text.y = element_markdown())   # Used to make the axis labels red for DA groups
+    
+    # ggsave(here("figs",glue("{dist} Dashboard Status 2022 - {Sys.Date()}.png")),
+    #        width = 8, height = 8)
+    # 
+}
+
+
+indicator.bar <- function(df, dist, indie) {
+    
+    
+    
+    
+    
+    tit <- case_when(indie == "math" ~ "<img src='icons/2math.png' width='40' /> Math",
+                     indie == "chronic" ~ "<img src='icons/5chronic.png' width='40' /> Chronic Absenteeism",
+                     indie == "grad" ~ "<img src='icons/4grad.png' width='40' /> Graduation Rate",
+                     indie == "elpi" ~ "<img src='icons/3elpi.png' width='40' /> English Languague Progress (ELPI)",
+                     indie == "ela" ~ "<img src='icons/1ela.png' width='40' /> ELA",
+                     indie == "susp" ~ "<img src='icons/6suspend.png' width='40' /> Suspension",
+                     TRUE ~ indie) 
+    
+    subtit <- case_when(indie == "math" ~ "Points represent average Distance from Standards",
+                     indie == "chronic" ~ "Percentage of students missing at least 10% of days",
+                     indie == "grad" ~ "Percentage of four-year cohort graduates",
+                     indie == "elpi" ~ "Percentage of EL that improve on the ELPAC",
+                     indie == "ela" ~ "Points represent average Distance from Standards",
+                     indie == "susp" ~ "Percentage of students Suspended at least 1 full day",
+                     TRUE ~ indie) 
+    
+    
+doc <-    school_dir %>%
+        filter(str_detect(district, dist),
+               school == "No Data") %>%
+    select(doc)%>% 
+    unlist()
+    
+    verts <- case_when(indie == "math" & doc %in% c(52,"00",54) ~ c(-95,-25,0,35),
+                       indie == "math" & doc %in% c(56) ~ c(-115,-60,0,25),
+                        indie == "chronic" ~ c(20,10,5,2.5),
+                        indie == "grad" ~ c(95,90.5,80,68),
+                        indie == "elpi" ~ c(65,55,45,35),
+                        indie == "ela" & doc %in% c(52,"00",54) ~ c(-70,-5,10,45),
+                       indie == "ela" & doc %in% c(56) ~ c(-45,0,30,75),
+                       indie == "susp" & doc %in% c(52) ~ c(6,3,1.5,0.5),
+                       indie == "susp" & doc %in% c("00",54) ~ c(8,4.5,2.5,1),
+                       indie == "susp" & doc %in% c(56) ~ c(9,6,3.5,1.5)
+                       ) 
+    
+ 
+    df %>%
+        filter( str_detect(districtname, dist),
+                indicator == indie,
+                statuslevel != 0,
+                !is.na(studentgroup.long)) %>%
+                mutate(`DA Eligible` = ifelse(DA.eligible =="DA" & statuslevel == 1 & studentgroup != "ALL", "DA", "Not"),
+               studentgroup.long = ifelse( DA.eligible=="DA" & studentgroup != "ALL",
+                                    glue("<span style='color:red'>{studentgroup.long}</span>"),
+                                    glue("<span style='color:black'>{studentgroup.long}</span>") # Used to make the axis labels red for DA groups
+               )
+               ) %>%
+        mutate(shifty = ifelse(currstatus >0, 1, -.05 ) ,
+               labby = case_when(indie == "math" ~ as.character(currstatus),
+                                 indie == "ela" ~ as.character(currstatus),
+                                 TRUE ~ percent(accuracy = 0.1, x = currstatus/100)),
+               labby.col = ifelse(statuslevel < 4, "white", "black")
+               ) %>%
+        ggplot( aes(x = reorder(studentgroup.long, currstatus ),
+                    y = currstatus,
+                    fill = factor(statuslevel, levels = c("1","2","3","4","5")),
+                    label = labby)
+        ) + 
+        geom_col() +
+        geom_text(position = position_dodge2(width = 1),
+                  aes(hjust =  shifty, color = labby.col)
+        ) +
+        geom_hline(yintercept = verts, linetype = "longdash" ) +
+        coord_flip() +
+        ggthemes::theme_hc() +
+        ggplot2::theme(plot.title.position = "plot",
+                       plot.title = element_markdown(size = 15)) +
+        scale_color_manual(guide = "none", values = bw.pal) +
+        scale_fill_manual(values = purp.pal,
+                          drop = FALSE) +
+        labs(title = paste0(tit," by Student Group for ",dist),
+             subtitle = subtit,
+             x = "",
+             y = ""
+        )  +
+        guides(fill = guide_legend(title = "Dashboard Status \nCell Phone Bars",
+                                   title.position = "top",
+                                   title.hjust = .5,
+                                   label.position = "bottom",
+                                   nrow = 1)
+        ) +
+        theme(legend.key.size = unit(2, 'cm' )) +
+     theme(axis.text.y = element_markdown())   # Used to make the axis labels red for DA groups
+    
+}
+
+
+
+
+
+```
+
+
+
+
+---
+title: "`r dist.name` Dashboard DA Summary"
+---
+
+
+## Report Purpose
+
+This report is created to synthesize information to assist `r dist.name` in reflecting on the student groups for whom indicators led to Differentiated Assistance.
+
+## Latest Status by Group
+
+The graphic below shows the color for each student group for each indicator for which a color was generated by the dashboard. This reflects the latest available colors from the [2022 dashboard](%60r%20paste0(%22https://www.caschooldashboard.org/reports/%22,dist,%22/2022%22)%60).
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 8
+
+dash.graph(dash2,dist.name) 
+
+
+```
+
+
+## Qualifying Groups
+
+This table displays which student groups qualified the district to be eligible for Differentiated Assistance. Moreover, for each student group it shows which Priority Areas and associated indicator criteria for which the student group qualifies.
+
+As a reminder, COEs must offer differentiated assistance to a school district if any student group meets the criteria for two or more LCFF priorities according to California Education Code Section 52071(c). [California's System of Support](https://www.cde.ca.gov/sp/sw/t1/csss.asp)
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 8
+
+dash.graph.da(dash.mry.da,dist.name) 
+
+
+```
+
+
+
+## Status Details for all Indicators 
+
+These graphs represent all of the indicators from the Dashboard and show how the student groups performed.
+
+<details>
+
+<summary>**Display graphs**</summary>
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 8
+
+indicator.list <- dash.mry.da %>% select(indicator) %>% filter(indicator != "censusenrollrates") %>% unique() %>% unlist()
+
+for (i in indicator.list) {
+
+p <- indicator.bar(dash.mry.da, dist.name, i)
+    
+print(p)
+
+}    
+
+# indicator.bar(dash2, dist.name, "ela")
+
+```
+
+</details>
+
+
+
+## Historical Graphs for Eligible Groups
+
+These graphs represent all of the indicators from Priority Areas that qualified the district in prior years. They included all qualifying subgroups on each graph, whether this was a qualifying indicator or not, as well as the All Students group for comparisons.
+
+<details>
+
+<summary>**Display graphs**</summary>
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 8
+
+
+
+
+indicator.bar(dash.mry.da, dist.name, "ela")
+
+
+```
+
+</details>
+
+## Status Needed to Exit DA in 2022
+
+This section attempts to identify the limit on the number of students for relevant indicators to receive an orange or higher indicator in the 2023 Dashboard. The thresholds below are based on the Very Low status on the 5x5 grids used in 2019 and the number of students in the calculation in 2022. State policies may change and the student counts may shift.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+dash.mry.da %>%
+    filter(str_detect(districtname,dist.name),
+           rtype == "D",
+           DA.eligible == "DA",
+           statuslevel == 1,
+           studentgroup != "ALL"
+           ) %>%
+    left_join(school_dir) %>%
+    mutate(status.thresh = case_when(indicator == "grad" ~  68,
+                                     indicator == "chronic" ~  20,
+                                     indicator == "susp" & doc %in% c(52)  ~  6,  # Elem
+                                     indicator == "susp" & doc %in% c("00",54)  ~  8,  # Unified
+                                     indicator == "susp" & doc %in% c(56)  ~  9,  # High
+                                     indicator == "ela" & doc %in% c(52,"00",54)  ~  -70,  # Elem
+                                     indicator == "ela" & doc %in% c(56)  ~  -45,  # High
+                                     indicator == "math" & doc %in% c(52,"00",54)  ~  -95,  # Elem
+                                     indicator == "math" & doc %in% c(56)  ~  -115,  # High
+                                     
+                                     ),
+           change.thresh = case_when(indicator == "grad" ~  68,
+                                       indicator == "chronic" ~ currstatus -.5,
+                                     indicator == "susp" & doc %in% c(52)  ~  currstatus -.3,  # Elem
+                                     indicator == "susp" & doc %in% c(00,54)  ~  currstatus -.3,  # Unified
+                                     indicator == "susp" & doc %in% c(56)  ~  currstatus -.5,  # High
+                                     indicator == "ela"   ~ currstatus + 3,  
+                                     indicator == "math"   ~ currstatus + 3,  
+                                     
+           )
+    ) %>%
+    rowwise() %>%
+    mutate(
+           thresh = case_when(indicator == "grad" ~  max(change.thresh,status.thresh),
+                                indicator == "chronic" ~ max(change.thresh,status.thresh),
+                                indicator == "susp"   ~  max(change.thresh,status.thresh),
+                                indicator == "ela"   ~ min(change.thresh,status.thresh),
+                                indicator == "math"   ~ min(change.thresh,status.thresh)
+           ),
+           pass.count = case_when(# indicator %in% c('math','ela') ~ thresh,
+                     indicator %in% c('chronic','susp') ~ floor( currdenom*thresh/100),
+                     indicator %in% c('grad') ~  ceiling( currdenom*thresh/100)
+           ),
+           comper = case_when(indicator %in% c('math','ela') ~ '',
+                     indicator %in% c('chronic','susp') ~ 'or less',
+                     indicator %in% c('grad') ~ 'or more'
+           
+                      ),
+           adjective = case_when(indicator == 'chronic' ~ 'chroncially absent',
+                            indicator == 'susp' ~ 'suspended',
+                            indicator == 'grad' ~ 'graduate'
+                              
+           )
+           ) %>%
+    select(cds, districtname, studentgroup.long, currstatus, currdenom , indicator, ends_with("thresh"), pass.count, comper, adjective) %>%
+    mutate(#sentence_short = glue("{studentgroup.long}  of {currdenom}"),
+            sentence_full = ifelse(indicator %in% c("ela","math"),
+            glue("{studentgroup.long} student group should have an average of {thresh} from standard or higher based on the **{indicator}** CAASPP exam to not be in Red."),
+                glue("{studentgroup.long} student group should have {pass.count} {comper} students **{adjective}** based on the count in 2022 of {currdenom} to not be in Red.")
+    )
+    ) %>%
+    arrange(studentgroup.long,indicator) %>%
+    pull(sentence_full) %>%
+    unlist() %>%
+    unname() %>%
+    as.vector() # %>%
+#    cat(paste('- ', .), sep = '\n')
+  #  cat(paste0("- ",.[[1]], "\n"))
+
+
+
+
+```
+
+
+------------------------------------------------------------------------
+
+This report was generated at `r Sys.time()`.
+
+It was developed by [David Dobrowski](https://github.com/dobrowski) at the [Monterey County Office of Education](https://www.montereycoe.org/)

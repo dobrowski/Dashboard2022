@@ -9,6 +9,8 @@ library(RColorBrewer)
 library(ggtext)
 library(glue)
 
+
+
 con <- mcoe_sql_con()
 
 gsheet <- "https://docs.google.com/spreadsheets/d/1J6SYEaGQJrNfYKegi7HZ_NgjMvYXgFa2fCaMxZK-U7M/edit#gid=0"

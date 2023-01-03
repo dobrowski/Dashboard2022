@@ -5,12 +5,25 @@
 
 
 elpi.partic <- dash.mry.da %>%
-    filter(! is.na( Flag95Pct ),
-           nSizeMet == "Y")
+    filter(! is.na( flag95pct ),
+           nsizemet == "Y")
 
 
 acad.partic <- dash.mry.da %>%
-    filter(! is.na( numPRLOSS ) ,
+    filter(! is.na( num_prloss ) ,
            prate_enrolled >= 30) %>%
-    select(districtname, studentgroup, definition, currstatus, currstatus_withoutPRLOSS, statuslevel, indicator)
+    select(cds, districtname, studentgroup, studentgroup.long, currstatus, currstatus_without_prloss, statuslevel, indicator) %>%
+    left_join(school_dir) %>%
+    mutate(status.thresh = case_when(indicator == "grad" ~  68,
+                                     indicator == "chronic" ~  20,
+                                     indicator == "susp" & doc %in% c(52)  ~  6,  # Elem
+                                     indicator == "susp" & doc %in% c("00",54)  ~  8,  # Unified
+                                     indicator == "susp" & doc %in% c(56)  ~  9,  # High
+                                     indicator == "ela" & doc %in% c(52,"00",54)  ~  -70,  # Elem
+                                     indicator == "ela" & doc %in% c(56)  ~  -45,  # High
+                                     indicator == "math" & doc %in% c(52,"00",54)  ~  -95,  # Elem
+                                     indicator == "math" & doc %in% c(56)  ~  -115,  # High
+                                     
+    ) ) %>%
+    select(cds, districtname, studentgroup, studentgroup.long, currstatus, currstatus_without_prloss, statuslevel, indicator, status.thresh) 
 
