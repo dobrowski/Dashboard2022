@@ -462,7 +462,7 @@ dash.graph(dash2,dist.name)
 
 ## Qualifying Groups
 
-This table displays which student groups qualified the district to be eligible for Differentiated Assistance. Moreover, for each student group it shows which Priority Areas and associated indicator criteria for which the student group qualifies.
+This table displays which student groups qualified the district to be eligible for [Differentiated Assistance](https://www.cde.ca.gov/ta/ac/cm/leaproposedcrit.asp). Moreover, for each student group it shows which Priority Areas and associated indicator criteria for which the student group qualifies.
 
 As a reminder, COEs must offer differentiated assistance to a school district if any student group meets the criteria for two or more LCFF priorities according to California Education Code Section 52071(c). [California's System of Support](https://www.cde.ca.gov/sp/sw/t1/csss.asp)
 
