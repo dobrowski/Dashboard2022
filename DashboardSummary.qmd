@@ -1,8 +1,7 @@
 ---
 title: "`r params$dist` Dashboard DA Summary"
 format: 
-    html:
-        page-layout: full
+    html
 editor: visual
 toc: true
 toc-location: left
