@@ -4,6 +4,8 @@
 
 library(here)
 library(MCOE)
+library(quarto)
+library(rmarkdown)
 
 
 
@@ -42,11 +44,25 @@ for(i in da.dists){
     
     dist.name <- mcoe_name(dist)
     
-    render("DashboardSummary.qmd", 
-           #   output_format = "all", 
-           output_file = here("output" , paste0("DashboardSummary", dist.name, ".html" ) ),
-           params = dist, 
-           envir = new.env(parent = globalenv()) 
+    # render("DashboardSummary.qmd",
+    #        #   output_format = "all",
+    # #       output_dir = "output",
+    #        output_file = here("output" ,paste0("DashboardSummary", dist.name, ".html" ) ),
+    #        params = dist,
+    #        envir = new.env(parent = globalenv())
+    # )
+    
+    quarto_render(#"DashboardSummary.qmd",
+                  #   output_format = "all",
+     #              output_dir = "output",
+    #              execute_dir = "output",
+                input = "DashboardSummary.qmd",
+
+                  output_file = paste0("DashboardSummary", dist.name, ".html" ) ,
+                  execute_params = dist,
     )
+    
+   file.rename(from = paste0("DashboardSummary", dist.name, ".html" ),
+               to = here("output", paste0("DashboardSummary", dist.name, ".html" ))  )
     
 }
