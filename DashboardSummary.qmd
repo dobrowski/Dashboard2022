@@ -400,7 +400,7 @@ doc <-    school_dir %>%
                                    label.position = "bottom",
                                    nrow = 1)
         ) +
-        theme(legend.key.size = unit(2, 'cm' )) +
+        theme(legend.key.size = unit(1.5, 'cm' )) +
      theme(axis.text.y = element_markdown())   # Used to make the axis labels red for DA groups
     
 }
@@ -435,8 +435,8 @@ hist.lines <- function(group, indie){
                group = studentgroup.long,
                x = reportingyear,
                color = studentgroup.long)) +
-        geom_line() +
-        geom_point()  +
+        geom_line(linewidth = 2) +
+        geom_point(size = 3)  +
         mcoe_theme +
         scale_color_few() + 
         ggplot2::theme(plot.title.position = "plot",
@@ -482,7 +482,7 @@ dash2 %>%
 
 Differentiated Assistance is determined by the California Dashboard. Colors reflect the latest available status from 2022. For all graphs, the darker the color the lower the status.
 
-![](icons/legend.png "For all graphs, the darker the color the lower the status."){width="2in"}
+![](icons/legend.png "For all graphs, the darker the color the lower the status."){fig-align="center" width="1.53in"}
 
 The graphic below shows the color for each student group for each indicator from the California 2022 Dashboard.
 
@@ -527,7 +527,8 @@ indicator.list <- dash.mry.da %>% select(indicator) %>% filter(indicator != "cen
 
 for (i in indicator.list) {
 
-p <- indicator.bar(dash.mry.da, dist.name, i)
+p <- indicator.bar(dash.mry.da, dist.name, i)+
+  theme(plot.margin = margin(t = 5, r = 10, b = 5, l = 5, unit = "pt"))
     
 print(p)
 
@@ -696,3 +697,5 @@ thresh.df %>%
 This report was generated at `r Sys.time()`.
 
 It was developed by [David Dobrowski](https://github.com/dobrowski) at the [Monterey County Office of Education](https://www.montereycoe.org/)
+
+![](icons/logo.png){fig-align="right" width="20%"}
