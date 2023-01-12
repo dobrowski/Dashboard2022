@@ -1,0 +1,78 @@
+---
+title: "Index of DA Summary Webpages"
+format: 
+    html:
+        theme: pulse
+        embed-resources: true
+        page-layout: full
+
+editor: visual
+---
+
+## Index of DA Districts
+
+The following list links to the DA Districts summary web pages.
+
+```{r}
+#| include: false
+
+
+library(MCOE)
+library(DT)
+library(dplyr)
+
+da.dists <- c("27102720000000",
+              "27659610000000",
+              "27659950000000", 
+              "27660350000000",
+              "27660500000000",
+              "27660680000000",
+              "27660920000000",
+              "27661420000000",
+              "27661590000000",
+              "27661670000000", 
+              "27661750000000",
+              "27661830000000",
+              "27661910000000",
+              "27662250000000",
+              "27738250000000",
+              "27754400000000",
+              "27754730000000" )
+
+
+
+index.tbl <- tibble(cds = da.dists) %>%
+    rowwise() %>%
+    mutate(dist.name = mcoe_name(cds),
+           url = paste0("<a href='","https://da-monterey.netlify.app/","DashboardSummary", dist.name, ".html","'>","https://da-monterey.netlify.app/","DashboardSummary", dist.name, ".html","</a>"  ) )
+
+
+```
+
+
+```{r}
+#| echo: false
+#| warning: false
+
+datatable(index.tbl,
+        #  colnames = c("Student Group", "Indicator", "Current Status", "Target Status for Orange", "Change Needed", "Number of Students (as applicable)"),
+       #   caption = "Change in Indicators Needed to Exit Red in 2023",
+          rownames = FALSE,
+          options = list(lengthChange = FALSE,
+                         searching = TRUE),
+       escape = FALSE) 
+
+
+```
+
+
+------------------------------------------------------------------------
+
+This report was generated at `r Sys.time()`.
+
+It was developed by [David Dobrowski](https://github.com/dobrowski) at the [Monterey County Office of Education](https://www.montereycoe.org/)
+
+![](icons/logo.png){fig-align="right" width="20%"}
+
+
+
