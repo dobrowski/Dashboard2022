@@ -86,3 +86,37 @@ for(i in da.dists){
                to = here("output", paste0("DashboardSummary", dist.name, ".html" ))  )
     
 }
+
+
+
+
+### Schools ----
+
+school.list <- c(
+"27661592730109",
+"27661592730273",
+"27661590124610",
+"27661596058762"
+)
+
+
+
+
+for(i in school.list){
+    
+    dist <- list(dist =  i )
+    
+     quarto_render(
+        input = "DashboardSummarySchool.qmd",
+        
+        output_file = paste0("DashboardSummary", dist, ".html" ) ,
+        execute_params = dist,
+    )
+    
+    file.rename(from = paste0("DashboardSummary", dist, ".html" ),
+                to = here("output", paste0("DashboardSummary", dist, ".html" ))  )
+    
+}
+
+
+
