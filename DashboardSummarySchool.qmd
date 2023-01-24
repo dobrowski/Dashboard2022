@@ -35,9 +35,11 @@ library(DT)
 options(scipen=999)
 
 
-dist <- params$dist
+cds.school <- params$dist
 
-dist.name <- mcoe_name(dist)
+cds.dist <- paste0(str_sub(cds.school,1,7),"0000000")
+
+dist.name <- mcoe_name(cds.dist)
 
 
 con <- MCOE::mcoe_sql_con()
@@ -69,7 +71,7 @@ da.pal <- c("DA" = "red", "Not"= "black")
 dash2 <- tbl(con,"DASH_ALL_2022") %>%
      filter(countyname == "Monterey",
    #        rtype == "D",
-           cds == dist) %>%
+           cds == cds.dist | cds == cds.school) %>%
     collect () %>%
     mutate(indicator2 = recode(indicator,
                                "ela" = "<br><img src='icons/1ela.png' width='40' /><br>4<br>ELA",
@@ -111,7 +113,7 @@ dash.old <- tbl(con,"DASH_ALL") %>%
            ) %>%
     collect () %>%
     mutate(cds = as.numeric(cds)) %>%
-    filter(cds == dist) %>%
+    filter(cds == cds.school) %>%
     left_join(studentgroup.tbl) %>%
  #   left_join_codebook("DASH_SUSP", "studentgroup") %>%
     mutate(definition = recode(definition, "Student Group" = "English Learner")) %>% 
@@ -138,7 +140,7 @@ school_dir <- tbl(con, "SCHOOL_DIR") %>%
 
 
 school.name <- school_dir %>%
-    filter(cds == dist)  %>%
+    filter(cds == cds.school)  %>%
     select(school) %>%
     unlist()
 
@@ -160,6 +162,7 @@ add_cols <- function(df, cols) {
 
 
 da.list <- dash.mry  %>%
+    filter(cds == cds.dist) %>%
     select(districtname, studentgroup, statuslevel, indicator) %>%
     pivot_wider(id_cols = c(districtname,studentgroup),
                 names_from = indicator,
@@ -200,6 +203,22 @@ da.inds <- dash.mry.da %>%
     unlist()
 
 
+dash.mry.da.school <- dash.mry.da %>%
+    filter(cds == cds.school)
+
+
+dash.mry.da.dist <- dash.mry.da %>%
+    filter(cds == cds.dist)
+
+
+
+da.inds.overlap <- dash.mry.da.school %>%
+    filter(!is.na(currstatus)) %>%
+    select(indicator) %>%
+    unique() %>%
+    unlist() %>%
+    intersect(da.inds)
+
 ### Build historic table -----
 
 
@@ -209,8 +228,9 @@ dash.old2 <- dash.old %>%
            reportingyear = as.numeric(reportingyear))
 
 
-dash.hist <- dash.mry.da %>%
-    bind_rows(dash.old2) 
+dash.hist <- dash.mry.da.school %>%
+    bind_rows(dash.old2) %>%
+    filter(cds == cds.school)
 
 
 
@@ -245,7 +265,7 @@ dash.graph <- function(df, dist, school) {
         scale_fill_manual(values = purp.pal,
                           drop = FALSE) +
   #      scale_color_manual( values = da.pal) +
-        labs(title = paste0("2022 Dashboard Status by Student Group for ",dist),
+        labs(title = paste0("2022 Dashboard Status by Student Group for ",school),
              x = "",
              y = ""
         )  +
@@ -261,12 +281,11 @@ dash.graph <- function(df, dist, school) {
 }
 
 
-dash.graph.da <- function(df, dist, school) {
+dash.graph.da <- function(df, dist) {
     
 
     df %>%
         filter(str_detect(districtname,dist),
-               str_detect(schoolname,school),
                statuslevel !=0,
                !is.na(studentgroup.long)
         ) %>%
@@ -363,7 +382,8 @@ doc <-    school_dir %>%
         filter(str_detect(districtname,dist),
                str_detect(schoolname,schooly),
                 indicator == indie,
-                statuslevel != 0,
+               !is.na(currstatus),
+ #               statuslevel != 0,
                 !is.na(studentgroup.long)) %>%
                 mutate(`DA Eligible` = ifelse(DA.eligible =="DA" & statuslevel == 1 & studentgroup != "ALL", "DA", "Not"),
                studentgroup.long = ifelse( DA.eligible=="DA" & studentgroup != "ALL",
@@ -375,11 +395,11 @@ doc <-    school_dir %>%
                labby = case_when(indie == "math" ~ as.character(currstatus),
                                  indie == "ela" ~ as.character(currstatus),
                                  TRUE ~ percent(accuracy = 0.1, x = currstatus/100)),
-               labby.col = ifelse(statuslevel < 4, "white", "black")
+               labby.col = ifelse(statuslevel.orig < 4, "white", "black")
                ) %>%
         ggplot( aes(x = reorder(studentgroup.long, currstatus ),
                     y = currstatus,
-                    fill = factor(statuslevel, levels = c("1","2","3","4","5")),
+                    fill = factor(statuslevel.orig, levels = c("1","2","3","4","5")),
                     label = labby)
         ) + 
         geom_col() +
@@ -469,20 +489,6 @@ title: "`r school.name` Dashboard DA Summary"
 
 This report is created to assist `r school.name` in reflecting on the student groups whose indicators led to Differentiated Assistance for `r dist.name`.
 
-```{r}
-#| echo: false
-#| warning: false
-#| include: false
-#| fig-width: 7
-#| fig-height: 8
-
-dash2 %>%
-        mutate(statuslevel = statuslevel.orig) %>%
-    dash.graph(dist.name, school.name) 
-
-
-```
-
 ## Qualifying Groups
 
 Differentiated Assistance is determined by the California Dashboard. Colors reflect the latest available status from 2022. For all graphs, the darker the color the lower the status.
@@ -494,12 +500,11 @@ The graphic below shows the color for each student group for each indicator from
 ```{r}
 #| results: asis 
 #| echo: false 
-http_address <- glue::glue("https://www.caschooldashboard.org/reports/{dist}/2022")
+http_address <- glue::glue("https://www.caschooldashboard.org/reports/{cds.dist}/2022")
 cat("[California Dashboard 2022](", http_address, ")")
 
 ```
 
-**Question: Do we want to show the district DA table, or do we want to show the school dashboard info, without regard to those identified for DA?**
 
 The graph below displays which student groups qualified `r dist.name` to be eligible for [Differentiated Assistance](https://www.cde.ca.gov/ta/ac/cm/leaproposedcrit.asp). Moreover, for each student group it shows which Priority Areas and associated indicators met qualification criteria.
 
@@ -511,10 +516,26 @@ As a reminder, COEs must offer differentiated assistance to a school district if
 #| fig-width: 7
 #| fig-height: 8
 
-dash.graph.da(dash.mry.da,dist.name, school.name) 
-
+dash.mry.da.dist %>%
+dash.graph.da(dist.name) 
 
 ```
+For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall.  Note this also includes student groups with 11 to 29 students in them to provide a fuller picture even if those groups are not used for state accountability calculations. 
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-width: 7
+#| fig-height: 8
+
+dash2 %>%
+        filter(cds == cds.school) %>%
+        mutate(statuslevel = statuslevel.orig) %>%
+    dash.graph(dist.name, school.name) 
+```
+
+
+
 
 ## Status Details for all Indicators
 
@@ -530,18 +551,25 @@ These graphs represent all of the indicators from the Dashboard and show how eac
 #| fig-width: 7
 #| fig-height: 8
 
-indicator.list <- dash.mry.da %>% select(indicator) %>% filter(indicator != "censusenrollrates") %>% unique() %>% unlist()
+
+indicator.list <- dash.mry.da.school %>% 
+    filter(!is.na(currstatus)) %>%
+    select(indicator) %>% 
+    filter(indicator != "censusenrollrates") %>%
+    unique() %>%
+    unlist()
+
+
 
 for (i in indicator.list) {
 
-p <- indicator.bar.school(df = dash.mry.da, dist = dist.name, school =  school.name , indie =   i)+
+p <- indicator.bar.school(df = dash.mry.da.school, dist = dist.name, school =  school.name , indie =   i)+
   theme(plot.margin = margin(t = 5, r = 10, b = 5, l = 5, unit = "pt"))
     
 print(p)
 
 }    
 
-# indicator.bar(dash2, dist.name, "ela")
 
 ```
 
@@ -562,8 +590,7 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 #| fig-height: 6
 
 
-
-for (i in da.inds) {
+for (i in da.inds.overlap) {
     
 p <- hist.lines(c("ALL",da.groups), i)
 
@@ -579,11 +606,9 @@ print(p)
 
 </details>
 
-## Status Needed to Exit DA in 2022
+## Status Needed to Achieve Orange in 2023
 
-** Should these reflect the distict numbers needed to escape DA or only for the groups at the school that would have qualified to be at the higher status/color? **
-
-This section estimates the limits for relevant indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift.
+This section estimates the limits for indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift.  Only student groups in DA and their qualifying indicators for `r dist.name` are included below, however, the thresholds represent the numbers for `r school.name`. Because of this if the school is currently at a low status, rather than very low like the district, it is possible to do worse, but that is not encouraged. 
 
 ```{r}
 #| echo: false
@@ -591,13 +616,16 @@ This section estimates the limits for relevant indicators to receive an orange o
 #| message: false
 #| results: asis
 
-thresh.df <- dash.mry.da %>%
-        filter(str_detect(districtname,dist.name),
-               str_detect(schoolname,school.name),
+thresh.df <- dash.mry.da.school %>%
+         filter(
+        #     str_detect(districtname,dist.name),
+        #        str_detect(schoolname,school.name),
   #         rtype == "D",
            DA.eligible == "DA",
-           statuslevel == 1,
-           studentgroup != "ALL"
+#           statuslevel == 1,
+           studentgroup %in% da.groups,
+            indicator %in% da.inds,
+            !is.na(currstatus)
            ) %>%
     left_join(school_dir) %>%
     mutate(status.thresh = case_when(indicator == "grad" ~  68,
@@ -659,7 +687,7 @@ thresh.tbl <- thresh.df %>%
 
 datatable(thresh.tbl,
           colnames = c("Student Group", "Indicator", "Current Status", "Target Status for Orange", "Change Needed", "Number of Students (as applicable)"),
-          caption = "Change in Indicators Needed to Exit Red in 2023",
+          caption = "Change in Indicators Needed to Avoid Red in 2023",
           rownames = FALSE,
           options = list(lengthChange = FALSE,
                          searching = FALSE)) %>%

@@ -572,7 +572,7 @@ print(p)
 
 </details>
 
-## Status Needed to Exit DA in 2022
+## Status Needed to Exit DA in 2023
 
 This section estimates the limits for relevant indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift.
 
