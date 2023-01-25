@@ -100,7 +100,16 @@ dash2 <- tbl(con,"DASH_ALL_2022") %>%
 
 dash.mry <- dash2 %>%
     filter(countyname == "Monterey",
-           rtype == "D")
+           rtype == "D") %>%
+    mutate(indicator2 = recode(indicator,
+                               "ela" = "4 -  ELA",
+                               "math" = "4 -  Math",
+                               "elpi" = "4 - ELPI",
+                               "grad" = "5 - Grad",
+                               "chronic" = "5 - Chronic <br>Absenteeism",
+                               "susp" = "6 - Suspension"
+    ))
+
 
 
 
@@ -184,7 +193,10 @@ dash.graph <- function(df, dist) {
 }
 
 
-dash.graph(dash.mry,"Carmel") 
+dash.graph(dash.mry,"Alisal") 
+
+
+ggsave(here("figs", dist, paste0("Alisal"," "," Dashboard Basic chart.png")), width = 8, height = 6)
 
 
 ggsave(here("figs", dist, paste0(dist," "," Dashboard Basic chart.png")), width = 8, height = 6)
@@ -271,7 +283,11 @@ dash.graph.da <- function(df, dist) {
 }
 
 
-dash.graph.da(dash.mry.da,"Carmel") 
+
+
+dash.graph.da(dash.mry.da,"Alisal") +
+    theme(legend.position = "none")
+
 
 
 
@@ -281,7 +297,26 @@ dash.graph.da(dash.mry.da,"Gonzales")
 dash.graph.da(dash.mry.da,"Mission")
 
 
-ggsave("Gonzales DA.png", width = 8, height = 8)
+ggsave("Alisal DA.png", width = 8, height = 6)
+
+
+
+leas <- dash.mry.da %>%
+    select(districtname) %>%
+    distinct() %>%
+    unlist()
+
+
+for (l in leas){
+    
+dash.graph.da(dash.mry.da,l) +
+    theme(legend.position = "none")
+
+ggsave(here("figs", paste0(l," DA ", Sys.Date(), ".png")), width = 10, height = 6)
+
+}
+
+
 
 
 ###  Indicator Bar Graphs ----
