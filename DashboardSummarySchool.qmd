@@ -543,7 +543,7 @@ These graphs represent all of the indicators from the Dashboard and show how eac
 
 <details>
 
-<summary>**Click here to display graphs**</summary>
+<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
 
 ```{r}
 #| echo: false
@@ -581,7 +581,7 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 
 <details>
 
-<summary>**Click here to display graphs**</summary>
+<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
 
 ```{r}
 #| echo: false
@@ -622,7 +622,7 @@ thresh.df <- dash.mry.da.school %>%
         #        str_detect(schoolname,school.name),
   #         rtype == "D",
            DA.eligible == "DA",
-#           statuslevel == 1,
+           statuslevel == 1,
            studentgroup %in% da.groups,
             indicator %in% da.inds,
             !is.na(currstatus)
@@ -699,7 +699,7 @@ The following sentences convey the same information as the table above in a diff
 
 <details>
 
-<summary>**Click here to display sentences**</summary>
+<summary>**[Click here to display sentences]{style="color:purple;"}**</summary>
 
 ```{r}
 #| echo: false
