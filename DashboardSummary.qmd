@@ -515,7 +515,7 @@ These graphs represent all of the indicators from the Dashboard and show how eac
 
 <details>
 
-<summary>**Click here to display graphs**</summary>
+<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
 
 ```{r}
 #| echo: false
@@ -546,7 +546,7 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 
 <details>
 
-<summary>**Click here to display graphs**</summary>
+<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
 
 ```{r}
 #| echo: false
