@@ -606,9 +606,9 @@ print(p)
 
 </details>
 
-## Status Needed to Achieve Orange in 2023
+## Status Needed to Avoid Red in 2023
 
-This section estimates the limits for indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift.  Only student groups in DA and their qualifying indicators for `r dist.name` are included below, however, the thresholds represent the numbers for `r school.name`. Because of this if the school is currently at a low status, rather than very low like the district, it is possible to do worse, but that is not encouraged. 
+This section estimates the limits for indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift.  Only student groups in DA and their qualifying indicators for `r dist.name` are included below and only if they are in the lowest status for `r school.name`.  The thresholds represent the numbers for `r school.name`.  
 
 ```{r}
 #| echo: false

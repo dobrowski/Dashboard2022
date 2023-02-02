@@ -100,15 +100,16 @@ dash2 <- tbl(con,"DASH_ALL_2022") %>%
 
 dash.mry <- dash2 %>%
     filter(countyname == "Monterey",
-           rtype == "D") %>%
-    mutate(indicator2 = recode(indicator,
-                               "ela" = "4 -  ELA",
-                               "math" = "4 -  Math",
-                               "elpi" = "4 - ELPI",
-                               "grad" = "5 - Grad",
-                               "chronic" = "5 - Chronic <br>Absenteeism",
-                               "susp" = "6 - Suspension"
-    ))
+           rtype == "D") # %>%
+    # mutate(indicator2 = recode(indicator,
+    #                            "ela" = "4 -  ELA",
+    #                            "math" = "4 -  Math",
+    #                            "elpi" = "4 - ELPI",
+    #                            "grad" = "5 - Grad",
+    #                            "chronic" = "5 - Chronic <br>Absenteeism",
+    #                            "susp" = "6 - Suspension"
+#    )
+)
 
 
 
@@ -146,8 +147,9 @@ dash.graph <- function(df, dist) {
                statuslevel !=0,
                !is.na(studentgroup.long)
                ) %>%
+        mutate(studentgroup = replace(studentgroup,studentgroup == "AA", "BL")) %>%
     ggplot() +
-        geom_tile(aes(y = reorder(studentgroup.long, desc(studentgroup.long)),  # Student group
+        geom_tile(aes(y = reorder(studentgroup.long, desc(studentgroup)),  # Student group
                       x = as.factor(indicator2),  # Indicator
                       fill = factor(statuslevel, levels = c("1","2","3","4","5")),   # Status rating
                      # color = "black",  # as.factor(`DA Eligible`), 
@@ -199,10 +201,10 @@ dash.graph(dash.mry,"Alisal")
 ggsave(here("figs", dist, paste0("Alisal"," "," Dashboard Basic chart.png")), width = 8, height = 6)
 
 
-ggsave(here("figs", dist, paste0(dist," "," Dashboard Basic chart.png")), width = 8, height = 6)
+ggsave(here("figs", dist, paste0(dist," "," Dashboard Basic chart.png")), width = 8, height = 8)
 
 
-dash.graph(dash.mry,"Gonzales")
+dash.graph(dash.mry,"Salinas Union")
 
 
 dash.graph(dash.mry,"San Ardo")
@@ -235,6 +237,7 @@ dash.graph.da <- function(df, dist) {
                statuslevel !=0,
                !is.na(studentgroup.long)
         ) %>%
+        mutate(studentgroup = replace(studentgroup,studentgroup == "AA", "BL")) %>%
         mutate(`DA Eligible` = ifelse(DA.eligible =="DA" & statuslevel == 1 & studentgroup != "ALL", "DA", "Not"),
                studentgroup.long = ifelse( DA.eligible=="DA" & studentgroup != "ALL",
                                     glue("<span style='color:red'>{studentgroup.long}</span>"),
@@ -242,7 +245,7 @@ dash.graph.da <- function(df, dist) {
                )
                ) %>%
         ggplot() +
-        geom_tile(aes(y = reorder(studentgroup.long, desc(studentgroup.long)),  # Student group
+        geom_tile(aes(y = reorder(studentgroup.long, desc(studentgroup)),  # Student group
                       x = as.factor(indicator2),  # Indicator
                       fill = factor(statuslevel, levels = c("1","2","3","4","5")),   # Status rating
                        color = as.factor(`DA Eligible`), 
@@ -291,7 +294,12 @@ dash.graph.da(dash.mry.da,"Alisal") +
 
 
 
-dash.graph.da(dash.mry.da,"Gonzales")
+dash.graph.da(dash.mry.da,"Salinas Union")
+
+
+ggsave(here("figs", dist, paste0(dist," "," Dashboard DA chart.png")), width = 8, height = 8)
+
+
 
 
 dash.graph.da(dash.mry.da,"Mission")
