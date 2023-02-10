@@ -9,7 +9,7 @@ editor: visual
 toc: true
 toc-location: left
 params:
-    dist: '27661592730109'
+    dist: '27661592734556'
 ---
 
 ```{r}
@@ -505,7 +505,6 @@ cat("[California Dashboard 2022](", http_address, ")")
 
 ```
 
-
 The graph below displays which student groups qualified `r dist.name` to be eligible for [Differentiated Assistance](https://www.cde.ca.gov/ta/ac/cm/leaproposedcrit.asp). Moreover, for each student group it shows which Priority Areas and associated indicators met qualification criteria.
 
 As a reminder, COEs must offer differentiated assistance to a school district if any student group meets the criteria for two or more LCFF priorities according to California Education Code Section 52071(c). [California's System of Support](https://www.cde.ca.gov/sp/sw/t1/csss.asp)
@@ -520,7 +519,8 @@ dash.mry.da.dist %>%
 dash.graph.da(dist.name) 
 
 ```
-For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall.  Note this also includes student groups with 11 to 29 students in them to provide a fuller picture even if those groups are not used for state accountability calculations. 
+
+For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall. Note this also includes student groups with 11 to 29 students in them to provide a fuller picture even if those groups are not used for state accountability calculations.
 
 ```{r}
 #| echo: false
@@ -534,16 +534,13 @@ dash2 %>%
     dash.graph(dist.name, school.name) 
 ```
 
-
-
-
 ## Status Details for all Indicators
 
 These graphs represent all of the indicators from the Dashboard and show how each of the student groups performed.
 
 <details>
 
-<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
+<summary>[**Click here to display graphs**]{style="color:purple;"}</summary>
 
 ```{r}
 #| echo: false
@@ -581,7 +578,7 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 
 <details>
 
-<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
+<summary>[**Click here to display graphs**]{style="color:purple;"}</summary>
 
 ```{r}
 #| echo: false
@@ -608,7 +605,7 @@ print(p)
 
 ## Status Needed to Avoid Red in 2023
 
-This section estimates the limits for indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift.  Only student groups in DA and their qualifying indicators for `r dist.name` are included below and only if they are in the lowest status for `r school.name`.  The thresholds represent the numbers for `r school.name`.  
+This section estimates the limits for indicators to receive an orange or higher color next year on the 2023 Dashboard. The thresholds below are based on the [5x5 grids last approved by the State Board of Education](https://www.cde.ca.gov/ta/ac/cm/fivebyfivecolortables19.asp#AcademicTable) and the number of students in the 2022 calculation. State policies may change and the student counts may shift. Only student groups in DA and their qualifying indicators for `r dist.name` are included below and only if they are in the lowest status for `r school.name`. The thresholds represent the numbers for `r school.name`.
 
 ```{r}
 #| echo: false
@@ -699,7 +696,7 @@ The following sentences convey the same information as the table above in a diff
 
 <details>
 
-<summary>**[Click here to display sentences]{style="color:purple;"}**</summary>
+<summary>[**Click here to display sentences**]{style="color:purple;"}</summary>
 
 ```{r}
 #| echo: false

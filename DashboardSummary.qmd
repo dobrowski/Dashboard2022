@@ -511,11 +511,11 @@ dash.graph.da(dash.mry.da,dist.name)
 
 ## Status Details for all Indicators
 
-These graphs represent all of the indicators from the Dashboard and show how each of the student groups performed.  The vertical lines represent the cutpoints between different status levels.
+These graphs represent all of the indicators from the Dashboard and show how each of the student groups performed. The vertical lines represent the cutpoints between different status levels.
 
 <details>
 
-<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
+<summary>[**Click here to display graphs**]{style="color:purple;"}</summary>
 
 ```{r}
 #| echo: false
@@ -546,7 +546,7 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 
 <details>
 
-<summary>**[Click here to display graphs]{style="color:purple;"}**</summary>
+<summary>[**Click here to display graphs**]{style="color:purple;"}</summary>
 
 ```{r}
 #| echo: false
