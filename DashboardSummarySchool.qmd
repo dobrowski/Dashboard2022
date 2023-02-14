@@ -34,7 +34,6 @@ library(DT)
 
 options(scipen=999)
 
-
 cds.school <- params$dist
 
 cds.dist <- paste0(str_sub(cds.school,1,7),"0000000")
@@ -104,7 +103,11 @@ studentgroup.tbl <- tribble(
 ,"HOM",	"Homeless Youth"
 )
 
+```
 
+
+```{r}
+#| include: false
 
 dash.old <- tbl(con,"DASH_ALL") %>%
      filter(countyname == "Monterey",
@@ -233,6 +236,93 @@ dash.hist <- dash.mry.da.school %>%
     filter(cds == cds.school)
 
 
+### Determine ATSI eligibility -----
+
+
+
+atsi.cde <- read_xlsx(here("data","essaassistance22rev.xlsx"),
+                      sheet = "2022-23 ESSA State Schools",
+                      range = "A3:AF9946" )
+
+
+
+atsi.cde.mry <- atsi.cde %>%
+    filter(countyname == "Monterey",
+           AssistanceStatus2022 == "ATSI") %>%
+    pivot_longer(cols = AA:WH) %>%
+    filter(value > 0)
+
+
+
+atsi <- dash2 %>%
+    filter(str_starts(cds,"27"),
+           rtype == "S",
+           indicator != "censusenrollrates",
+       #    studentgroup == "ALL",
+           statuslevel != 0
+    ) %>%
+    pivot_wider(id_cols = c(cds, districtname,schoolname, studentgroup), names_from = indicator, values_from = c(statuslevel, currstatus)   ) %>%
+        add_cols(c("statuslevel_ela",
+           "statuslevel_math",
+           "statuslevel_elpi",
+           "statuslevel_susp",
+           "statuslevel_grad",
+           "statuslevel_chronic")) %>%
+
+#    left_join(elpi.sch) %>%
+#    left_join(title1) %>%
+    
+    rowwise() %>%
+    mutate(num.ind =  sum(!is.na(c_across(starts_with("status")))) ,
+           sum.ind =  sum(c_across(starts_with("status")), na.rm = TRUE ),
+           num.1s =  sum(c_across(starts_with("status")) == 1, na.rm = TRUE ),
+           # atsi.grad = case_when(currstatus_grad <= 68 ~ "Grad",
+           #                      TRUE ~ "No"),
+           atsi.all =  ifelse(num.ind == sum.ind,"All Indicators at Lowest Status", "No"),
+           atsi.but.1 =  ifelse(num.ind  - num.1s == 1 & num.1s > 0 ,"All but one Indicator at Lowest Status", "No"),
+         #  atsi.majority = case_when(num.ind >= 5  & num.1s >= ceiling(num.ind/2 ) ~ "Majority", TRUE ~ "No")
+    ) %>%
+    arrange(cds) %>%
+    #    mutate(csi = ifelse( (csi.all == "No" & csi.grad == "No"), FALSE, TRUE) 
+    mutate(atsi = ifelse( (atsi.all == "No" 
+                      #     &  atsi.grad == "No" 
+                           &  atsi.but.1 == "No" 
+                      #     &  atsi.majority == "No"
+                           ),
+                          FALSE, TRUE) 
+           
+    )
+
+
+atsi.mry <- atsi %>%
+    filter(str_starts(cds,"27"),
+  #         atsi == TRUE
+    ) %>%
+    select(cds, studentgroup, starts_with("status"), starts_with("atsi")) %>%
+    mutate(name = recode(studentgroup,
+                                 "MR" = "TOM",
+                          #       "ELO" = "EL"
+                         )
+           )
+
+
+atsi.joint <- atsi.cde.mry %>%
+    left_join(atsi.mry) %>%
+    mutate(across(starts_with("atsi"), ~ na_if(.x ,"No")  )) %>%
+    mutate(
+        atsi.reason = coalesce(atsi.all
+                               ,atsi.but.1
+                         #      , atsi.majority
+                               )
+    ) %>%
+    left_join(studentgroup.tbl) %>%
+    select(cds, schoolname, definition, atsi.reason, starts_with("status"))
+    
+```
+
+
+```{r}
+#| include: false
 
 ### Graphs -------
 
@@ -363,6 +453,7 @@ doc <-    school_dir %>%
                str_detect(school,schooly)
                ) %>%
     select(doc)%>% 
+    distinct() %>%
     unlist()
     
     verts <- case_when(indie == "math" & doc %in% c(52,"00",54) ~ c(-95,-25,0,35),
@@ -533,6 +624,78 @@ dash2 %>%
         mutate(statuslevel = statuslevel.orig) %>%
     dash.graph(dist.name, school.name) 
 ```
+
+
+## ATSI Designations
+
+
+Under ESSA student groups are identified for Additional Targeted Support and Improvement. 
+
+```{r da-table, echo=FALSE, message=FALSE}
+
+atsi.tbl <- atsi.joint %>%
+    filter(cds == cds.school) %>%
+    select(schoolname,
+           definition,
+           atsi.reason,
+           statuslevel_ela,
+           statuslevel_math,
+           statuslevel_elpi,
+           statuslevel_chronic,
+           statuslevel_grad,
+           statuslevel_susp)
+
+# atsi.need <- if ( length( atsi.tbl$definition) > 0 ) {datatable(atsi.tbl,
+#           colnames = c("School","Student Group", "Reason for ATSI", "Chronic Absenteeism Status", "ELPI Status", "Graduation Status", "Math Status", "Suspension Status", "ELA Status"),
+#           caption = "Student Groups Qualifying for ATSI on 2022 Dashboard",
+#           rownames = FALSE,
+# 
+#           options = list(pageLength = 10,
+#                          lengthChange = FALSE,
+#                          searching = FALSE,
+#                          dom = 't'))
+#     } else {
+#                        "There are no student groups at this school that are eligible for ATSI."}
+
+
+
+ atsi.need <- 
+    datatable(atsi.tbl,
+          colnames = c(#"Row Number" ,
+                       "School" ,
+                       "Student Group",
+                       "Reason for ATSI", 
+                      "ELA Status",
+                      "Math Status", 
+                       "ELPI Status", 
+                       "Chronic Absenteeism Status" ,
+                       "Graduation Status",
+                       "Suspension Status"
+                       ),
+          caption = "Student Groups Qualifying for ATSI on 2022 Dashboard",
+          rownames = FALSE,
+
+          options = list(#pageLength = 10,
+                         lengthChange = FALSE,
+                         searching = FALSE,
+                         dom = 't',
+                         columnDefs = list(list(className = 'dt-center', targets = "_all"))
+                         ),
+                            
+         
+            ) 
+   
+
+
+# atsi.need <- datatable(iris)
+
+ atsi.need
+
+```
+
+
+
+
 
 ## Status Details for all Indicators
 

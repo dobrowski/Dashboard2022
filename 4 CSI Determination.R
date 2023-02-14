@@ -102,12 +102,12 @@ atsi <- dash2 %>%
                                 TRUE ~ "No"),
            atsi.all =  ifelse(num.ind == sum.ind,"All 1", "No"),
            atsi.but.1 =  ifelse(num.ind  - num.1s == 1 & num.1s > 0 ,"All but 1", "No"),
-           #       csi.majority = case_when(num.ind >= 5  & num.1s >= ceiling(num.ind/2 ) ~ "Majority",
-           #                                TRUE ~ "No")
+           atsi.majority = case_when(num.ind >= 5  & num.1s >= ceiling(num.ind/2 ) ~ "Majority",
+                                           TRUE ~ "No")
     ) %>%
     arrange(cds) %>%
     #    mutate(csi = ifelse( (csi.all == "No" & csi.grad == "No"), FALSE, TRUE) 
-    mutate(atsi = ifelse( (atsi.all == "No" & atsi.grad == "No" & atsi.but.1 == "No"), FALSE, TRUE) 
+    mutate(atsi = ifelse( (atsi.all == "No" & atsi.grad == "No" & atsi.but.1 == "No" & atsi.majority == "No"), FALSE, TRUE) 
            
     )
 
@@ -126,7 +126,18 @@ atsi.mry <- atsi %>%
 
 atsi.joint <- atsi.cde.mry %>%
     left_join(atsi.mry) %>%
-    filter(str_detect(districtname, "Salinas City"))
+    mutate(across(starts_with("atsi"), ~ na_if(.x ,"No")  )) %>%
+    mutate(
+        atsi.reason = coalesce(atsi.all,atsi.but.1, atsi.majority)
+    ) %>%
+    left_join(studentgroup.tbl) %>%
+    select(cds, schoolname, definition, atsi.reason, starts_with("status"))
+    
+
+
+
+# %>%
+  #  filter(str_detect(districtname, "Salinas City"))
 
 
 
@@ -149,4 +160,4 @@ atsi.joint <- atsi.cde.mry %>%
 
 
 
-write_csv(atsi.joint, "scesd-atsi v2.csv")
+write_csv(atsi.joint, "scesd-atsi v3.csv")

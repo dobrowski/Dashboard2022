@@ -92,14 +92,30 @@ for(i in da.dists){
 
 ### Schools ----
 
-school.list <- c(
-# "27661592730109",
-# "27661592730273",
-# "27661590124610",
-# "27661596058762",
-"27660682730174"
-)
+school.list2 <- dash2 %>%
+    filter(str_detect(districtname,"Salinas Union"),
+           rtype =="S") %>%
+    select(cds, schoolname) %>%
+    distinct() %>%
+    mutate(url = paste0("https://da-monterey.netlify.app/dashboardsummary",cds))
 
+school.list <- dash2 %>%
+    filter(str_detect(districtname,"Salinas Union"),
+           rtype =="S") %>%
+    select(`cds`) %>%
+    distinct() %>%
+    unlist()
+
+school.list <- school.list[8]
+
+school.list <- c(
+ "27661592730109",
+ "27661592730273",
+ "27661590124610",
+ "27661596058762"
+# "27660682730174",
+# "27661592734481"
+)
 
 
 
