@@ -109,13 +109,25 @@ school.list <- dash2 %>%
 school.list <- school.list[8]
 
 school.list <- c(
- "27661592730109",
- "27661592730273",
+ # "27661592730109",
+ # "27661592730273",
  "27661590124610",
  "27661596058762"
 # "27660682730174",
 # "27661592734481"
 )
+
+
+school.list <- c("27659616025993", # Fremont Alisal
+
+ "27754406026678", # Main Street Middle
+"27661346026496") # Robert Downs
+
+
+
+
+
+school.list <- unique(atsi.cde.mry$cds) 
 
 
 

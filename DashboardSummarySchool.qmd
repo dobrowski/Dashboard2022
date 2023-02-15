@@ -34,6 +34,8 @@ library(DT)
 
 options(scipen=999)
 
+#cds.school <- "27659616025993"
+
 cds.school <- params$dist
 
 cds.dist <- paste0(str_sub(cds.school,1,7),"0000000")
@@ -626,12 +628,16 @@ dash2 %>%
 ```
 
 
-## ATSI Designations
+## CSI/ATSI Designations
 
 
-Under ESSA student groups are identified for Additional Targeted Support and Improvement. 
+Under ESSA, schools can be identified for Comprehensive Support and Improvement (CSI) or  Additional Targeted Support and Improvement (ATSI). CSI is based on a school's overall or All Students indicators, whereas ATSI is based on each student group's indicators. For more information please see: [CDE School Support](https://www.cde.ca.gov/sp/sw/t1/schoolsupport.asp).  
 
-```{r da-table, echo=FALSE, message=FALSE}
+`r if_else(cds.school %in% c("27102722730265","27659876026025", "27661590124610", "27661592734481"), "This school is eligible for CSI."  ,  "This school is not eligible for CSI."  )`
+
+```{r}
+#| echo: false
+#| message: false
 
 atsi.tbl <- atsi.joint %>%
     filter(cds == cds.school) %>%
@@ -659,7 +665,8 @@ atsi.tbl <- atsi.joint %>%
 
 
 
- atsi.need <- 
+# atsi.need <- 
+     if ( length( atsi.tbl$definition) > 0 ) {
     datatable(atsi.tbl,
           colnames = c(#"Row Number" ,
                        "School" ,
@@ -681,20 +688,19 @@ atsi.tbl <- atsi.joint %>%
                          dom = 't',
                          columnDefs = list(list(className = 'dt-center', targets = "_all"))
                          ),
-                            
-         
-            ) 
+            )      } 
+
    
 
 
 # atsi.need <- datatable(iris)
 
- atsi.need
+# atsi.need
 
 ```
 
 
-
+`r if (length( atsi.tbl$definition) == 0) {"There are no student groups at this school that are eligible for ATSI."}`
 
 
 ## Status Details for all Indicators
@@ -737,7 +743,7 @@ print(p)
 
 ## Historical Graphs for Eligible Groups
 
-These graphs represent all of the indicators from Priority Areas that qualified the district. They included all qualifying subgroups on each graph, whether this was a qualifying indicator or not, as well as the All Students group for comparisons.
+These graphs represent all of the indicators from Priority Areas that qualified the district for DA or school for ATSI.  They included all DA qualifying student groups and student groups qualify for ATSI on each graph, whether this was a qualifying indicator or not. In addition, the All Students group is included in all graphs for comparisons.
 
 <details>
 
@@ -749,10 +755,34 @@ These graphs represent all of the indicators from Priority Areas that qualified 
 #| fig-width: 7
 #| fig-height: 6
 
+atsi.groups <- atsi.tbl %>%
+    left_join(studentgroup.tbl) %>%
+    select(studentgroup) %>%
+    unlist()
 
-for (i in da.inds.overlap) {
+da.atsi.groups <- c(da.groups,atsi.groups) %>% unique()
+
+
+
+atsi.inds <- atsi.tbl %>%
+    pivot_longer(cols = starts_with("status")) %>%
+    filter(value == 1) %>%
+    mutate(indicator = str_remove(name,"statuslevel_")) %>%
+    select(indicator) %>%
+    unique() %>%
+    unlist()
+
+da.atsi.inds <- c(da.inds.overlap, atsi.inds) %>% unique()
+
+
+# print(da.atsi.groups)
+# 
+# print(da.atsi.inds)
+
+
+for (i in da.atsi.inds) {
     
-p <- hist.lines(c("ALL",da.groups), i)
+p <- hist.lines(c("ALL",da.atsi.groups), i)
 
 print(p)    
 

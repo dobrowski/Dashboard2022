@@ -70,8 +70,9 @@ clipr::write_clip(csi.mry)
 ### ATSI -------
 
 
-atsi.cde <- read_xlsx(here("data","essaassistance22.xlsx"),
-                      range = "A3:AF9949" )
+atsi.cde <- read_xlsx(here("data","essaassistance22rev.xlsx"),
+                      sheet = "2022-23 ESSA State Schools",
+                      range = "A3:AF9946" )
 
 
 
@@ -87,7 +88,7 @@ atsi <- dash2 %>%
     filter(str_starts(cds,"27"),
            rtype == "S",
        #    studentgroup == "ALL",
-           statuslevel != 0
+       #    statuslevel != 0
     ) %>%
     pivot_wider(id_cols = c(cds, districtname,schoolname, studentgroup), names_from = indicator, values_from = c(statuslevel, currstatus)   ) %>%
     
@@ -102,12 +103,16 @@ atsi <- dash2 %>%
                                 TRUE ~ "No"),
            atsi.all =  ifelse(num.ind == sum.ind,"All 1", "No"),
            atsi.but.1 =  ifelse(num.ind  - num.1s == 1 & num.1s > 0 ,"All but 1", "No"),
-           atsi.majority = case_when(num.ind >= 5  & num.1s >= ceiling(num.ind/2 ) ~ "Majority",
-                                           TRUE ~ "No")
+         #  atsi.majority = case_when(num.ind >= 5  & num.1s >= ceiling(num.ind/2 ) ~ "Majority", TRUE ~ "No")
     ) %>%
     arrange(cds) %>%
     #    mutate(csi = ifelse( (csi.all == "No" & csi.grad == "No"), FALSE, TRUE) 
-    mutate(atsi = ifelse( (atsi.all == "No" & atsi.grad == "No" & atsi.but.1 == "No" & atsi.majority == "No"), FALSE, TRUE) 
+    mutate(atsi = ifelse( (atsi.all == "No" 
+                      #     &  atsi.grad == "No" 
+                           &  atsi.but.1 == "No" 
+                      #     &  atsi.majority == "No"
+                           ),
+                          FALSE, TRUE) 
            
     )
 
@@ -128,10 +133,13 @@ atsi.joint <- atsi.cde.mry %>%
     left_join(atsi.mry) %>%
     mutate(across(starts_with("atsi"), ~ na_if(.x ,"No")  )) %>%
     mutate(
-        atsi.reason = coalesce(atsi.all,atsi.but.1, atsi.majority)
+        atsi.reason = coalesce(atsi.all
+                               ,atsi.but.1
+                         #      , atsi.majority
+                               )
     ) %>%
     left_join(studentgroup.tbl) %>%
-    select(cds, schoolname, definition, atsi.reason, starts_with("status"))
+    select(cds, schoolname, districtname, definition, atsi.reason, starts_with("status"))
     
 
 
@@ -160,4 +168,33 @@ atsi.joint <- atsi.cde.mry %>%
 
 
 
-write_csv(atsi.joint, "scesd-atsi v3.csv")
+write_csv(atsi.joint, "atsi list.csv")
+
+
+
+
+
+atsi.cde.mry.michelle <- atsi.cde %>%
+    filter(countyname == "Monterey",
+           AssistanceStatus2022 == "ATSI") %>%
+    mutate(AA = recode(AA, `1` = "African American"),
+           AI = recode(AI, `1` = "American Indian"),
+           AS = recode(AS, `1` = "Asian"),
+           EL = recode(EL, `1` = "English Learner"),
+           FI = recode(FI, `1` = "Filipino"),
+           FOS = recode(FOS, `1` = "Foster"),
+           HI = recode(HI, `1` = "Hispanic"),
+           HOM = recode(HOM, `1` = "Homeless"),
+           PI = recode(PI, `1` = "Pacific Islander"),
+           SED = recode(SED, `1` = "Socio-Economically Disadvantaged"),
+           SWD = recode(SWD, `1` = "Students with Disabilities"),
+           TOM = recode(TOM, `1` = "Two or More Races"),
+           WH = recode(WH, `1` = "White")) %>%
+           unite(studentgroups, c(AA:WH), sep = ",", na.rm = TRUE) %>%
+    select(schoolname, districtname, studentgroups)
+           
+
+
+
+
+write_csv(atsi.cde.mry.michelle, "atsi list michelle.csv")
