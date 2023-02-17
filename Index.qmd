@@ -1,5 +1,5 @@
 ---
-title: "Index of DA Summary Webpages"
+title: "Index of Dashboard Summary Webpages"
 format: 
     html:
         theme: pulse
@@ -9,9 +9,9 @@ format:
 editor: visual
 ---
 
-## Index of DA Districts
 
-The following list links to the DA Districts summary web pages.
+The following lists provide links to the Dashboard Summary web pages developed by MCOE based for Level 2 support based on data from CDE.
+
 
 ```{r}
 #| include: false
@@ -20,8 +20,9 @@ The following list links to the DA Districts summary web pages.
 library(MCOE)
 library(DT)
 library(dplyr)
+library(readr)
 
-da.dists <- c("27102720000000",
+da.dists <- c(# "27102720000000",
               "27659610000000",
               "27659950000000", 
               "27660350000000",
@@ -44,10 +45,23 @@ da.dists <- c("27102720000000",
 index.tbl <- tibble(cds = da.dists) %>%
     rowwise() %>%
     mutate(dist.name = mcoe_name(cds),
-           url = paste0("<a href='","https://da-monterey.netlify.app/","DashboardSummary", dist.name, ".html","'>","https://da-monterey.netlify.app/","DashboardSummary", dist.name, ".html","</a>"  ) )
+           url = paste0("<a href='","https://da-monterey.netlify.app/","DashboardSummary", dist.name, ".html","'>","https://da-monterey.netlify.app/","DashboardSummary", dist.name, ".html","</a>"  ) ) %>%
+    select(-cds)
+
+atsi.cde.mry.michelle <- read_rds("atsi list michelle.rds")
+
+
+
 
 
 ```
+
+
+
+::: {.panel-tabset}
+
+## DA Districts
+
 
 
 ```{r}
@@ -55,8 +69,8 @@ index.tbl <- tibble(cds = da.dists) %>%
 #| warning: false
 
 datatable(index.tbl,
-        #  colnames = c("Student Group", "Indicator", "Current Status", "Target Status for Orange", "Change Needed", "Number of Students (as applicable)"),
-       #   caption = "Change in Indicators Needed to Exit Red in 2023",
+          colnames = c("District", "URL"),
+          caption = "List of Districts in Differentiated Assistance (DA)",
           rownames = FALSE,
           options = list(lengthChange = FALSE,
                          searching = TRUE),
@@ -66,6 +80,31 @@ datatable(index.tbl,
 ```
 
 
+
+## ATSI Schools
+
+
+
+```{r}
+#| echo: false
+#| warning: false
+
+datatable(atsi.cde.mry.michelle,
+          colnames = c("School", "District", "Student Group(s)", "URL"),
+          caption = "List of Schools in Additional Targeted Support and Improvement (ATSI)",
+          rownames = FALSE,
+          options = list(lengthChange = FALSE,
+                         searching = TRUE),
+       escape = FALSE) 
+
+
+```
+
+
+:::
+
+
+
 ------------------------------------------------------------------------
 
 This report was generated at `r Sys.time()`.
@@ -73,6 +112,5 @@ This report was generated at `r Sys.time()`.
 It was developed by [David Dobrowski](https://github.com/dobrowski) at the [Monterey County Office of Education](https://www.montereycoe.org/)
 
 ![](icons/logo.png){fig-align="right" width="20%"}
-
 
 

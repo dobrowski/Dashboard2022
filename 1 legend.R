@@ -14,9 +14,10 @@ fake <- tribble(
 ggplot(fake, aes(x = column,
                  y = height,
                  label = height,
-                 fill = factor(height, levels = c("1","2","3","4","5")))
+                 fill = factor(height, levels = c("1","2","3","4","5"))
+                 )
        ) + 
-    geom_col() +
+    geom_col(color = "black") +
     geom_text(color = "black",
                size = 5,
               vjust= -.1
