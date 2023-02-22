@@ -450,24 +450,32 @@ indicator.bar.school <- function(df, dist, schooly, indie) {
                      TRUE ~ indie) 
     
     
-doc <-    school_dir %>%
+eil_code <-    school_dir %>%
         filter( str_detect(district,dist),
                str_detect(school,schooly)
                ) %>%
-    select(doc)%>% 
+    select(eil_code)%>% 
     distinct() %>%
     unlist()
     
-    verts <- case_when(indie == "math" & doc %in% c(52,"00",54) ~ c(-95,-25,0,35),
-                       indie == "math" & doc %in% c(56) ~ c(-115,-60,0,25),
+# 10 County Community
+# 60,61, 63 & eil_code == "ELEM"    Elementary. "INTMIDJR"
+# 62 Middle School
+# 66, 68, 63 & eil_code == "HS"  High School
+# 09 SPED
+# 69 Community Day School
+# 70 Adult Ed
+
+    verts <- case_when(indie == "math" & eil_code %in% c("ELEM","INTMIDJR") ~ c(-95,-25,0,35),
+                       indie == "math" & eil_code %in% c("HS") ~ c(-115,-60,0,25),
                         indie == "chronic" ~ c(20,10,5,2.5),
                         indie == "grad" ~ c(95,90.5,80,68),
                         indie == "elpi" ~ c(65,55,45,35),
-                        indie == "ela" & doc %in% c(52,"00",54) ~ c(-70,-5,10,45),
-                       indie == "ela" & doc %in% c(56) ~ c(-45,0,30,75),
-                       indie == "susp" & doc %in% c(52) ~ c(6,3,1.5,0.5),
-                       indie == "susp" & doc %in% c("00",54) ~ c(8,4.5,2.5,1),
-                       indie == "susp" & doc %in% c(56) ~ c(9,6,3.5,1.5)
+                        indie == "ela" & eil_code %in% c("ELEM","INTMIDJR") ~ c(-70,-5,10,45),
+                       indie == "ela" & eil_code %in% c("HS") ~ c(-45,0,30,75),
+                       indie == "susp" & eil_code %in% c("ELEM") ~ c(6.0,3.0,1.0,0.5),
+                       indie == "susp" & eil_code %in% c("INTMIDJR") ~ c(12.0,8.0,2.0,0.5),
+                       indie == "susp" & eil_code %in% c("HS") ~ c(10.0,6.0,1.5,0.5)
                        ) 
     
  
@@ -575,7 +583,7 @@ hist.lines <- function(group, indie){
 ```
 
 ---
-title: "`r school.name` Dashboard DA Summary"
+title: "`r school.name` Dashboard Summary"
 ---
 
 ## Report Purpose
@@ -613,7 +621,9 @@ dash.graph.da(dist.name)
 
 ```
 
-For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall. Note this also includes student groups with 11 to 29 students in them to provide a fuller picture even if those groups are not used for state accountability calculations.
+For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall. 
+
+Note this graph also includes student groups with 11 to 29 students in them to provide a fuller picture even if those groups are not used for state accountability calculations such as CSI/ATSI.
 
 ```{r}
 #| echo: false
@@ -631,7 +641,7 @@ dash2 %>%
 ## CSI/ATSI Designations
 
 
-Under ESSA, schools can be identified for Comprehensive Support and Improvement (CSI) or  Additional Targeted Support and Improvement (ATSI). CSI is based on a school's overall or All Students indicators, whereas ATSI is based on each student group's indicators. For more information please see: [CDE School Support](https://www.cde.ca.gov/sp/sw/t1/schoolsupport.asp).  
+Under ESSA, schools can be identified for Comprehensive Support and Improvement (CSI) or  Additional Targeted Support and Improvement (ATSI). CSI is based on a school's overall or All Students indicators, whereas ATSI is based on each student group's indicators. For more information please see: [CDE School Support](https://www.cde.ca.gov/sp/sw/t1/schoolsupport.asp).  It is important to note that calculations are only based on student groups with 30 or more students, which means not all the indicators on the previous graph will be used. 
 
 `r if_else(cds.school %in% c("27102722730265","27659876026025", "27661590124610", "27661592734481"), "This school is eligible for CSI."  ,  "This school is not eligible for CSI."  )`
 
@@ -806,6 +816,7 @@ This section estimates the limits for indicators to receive an orange or higher 
 #| message: false
 #| results: asis
 
+
 thresh.df <- dash.mry.da.school %>%
          filter(
         #     str_detect(districtname,dist.name),
@@ -820,20 +831,18 @@ thresh.df <- dash.mry.da.school %>%
     left_join(school_dir) %>%
     mutate(status.thresh = case_when(indicator == "grad" ~  68,
                                      indicator == "chronic" ~  20,
-                                     indicator == "susp" & doc %in% c(52)  ~  6,  # Elem
-                                     indicator == "susp" & doc %in% c("00",54)  ~  8,  # Unified
-                                     indicator == "susp" & doc %in% c(56)  ~  9,  # High
-                                     indicator == "ela" & doc %in% c(52,"00",54)  ~  -70,  # Elem
-                                     indicator == "ela" & doc %in% c(56)  ~  -45,  # High
-                                     indicator == "math" & doc %in% c(52,"00",54)  ~  -95,  # Elem
-                                     indicator == "math" & doc %in% c(56)  ~  -115,  # High
+                                     indicator == "susp" & eil_code %in% c("ELEM")  ~  6,  # Elem
+                                     indicator == "susp" & eil_code %in% c("INTMIDJR")  ~  12,  # Middle
+                                     indicator == "susp" & eil_code %in% c("HS")  ~  10,  # High
+                                     indicator == "ela"  & eil_code %in% c("ELEM","INTMIDJR")  ~  -70,  # Elem
+                                     indicator == "ela"  & eil_code %in% c("HS") ~ -45,  # High
+                                     indicator == "math" & eil_code %in% c("ELEM","INTMIDJR") ~  -95,  # Elem
+                                     indicator == "math" & eil_code %in% c("HS")  ~  -115,  # High
                                      
                                      ),
            change.thresh = case_when(indicator == "grad" ~  68,
-                                       indicator == "chronic" ~ currstatus -.5,
-                                     indicator == "susp" & doc %in% c(52)  ~  currstatus -.3,  # Elem
-                                     indicator == "susp" & doc %in% c(00,54)  ~  currstatus -.3,  # Unified
-                                     indicator == "susp" & doc %in% c(56)  ~  currstatus -.5,  # High
+                                     indicator == "chronic" ~ currstatus -.5,
+                                     indicator == "susp" ~  currstatus -.3,  # Elem
                                      indicator == "ela"   ~ currstatus + 3,  
                                      indicator == "math"   ~ currstatus + 3,  
                                      
@@ -922,7 +931,7 @@ thresh.df %>%
 
 ------------------------------------------------------------------------
 
-This report was generated at `r Sys.time()`.
+This report was last updated at `r Sys.time()`.
 
 It was developed by [David Dobrowski](https://github.com/dobrowski) at the [Monterey County Office of Education](https://www.montereycoe.org/)
 
