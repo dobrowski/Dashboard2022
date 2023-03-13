@@ -190,11 +190,15 @@ atsi.cde.mry.michelle <- atsi.cde %>%
            SWD = recode(SWD, `1` = "Students with Disabilities"),
            TOM = recode(TOM, `1` = "Two or More Races"),
            WH = recode(WH, `1` = "White")) %>%
-           unite(studentgroups, c(AA:WH), sep = ",", na.rm = TRUE) %>%
-    select(schoolname, districtname, studentgroups)
+           unite(studentgroups, c(AA:WH), sep = ", ", na.rm = TRUE) %>%
+    mutate(url = paste0("<a href='","https://da-monterey.netlify.app/","DashboardSummary", cds, ".html","'>","https://da-monterey.netlify.app/","DashboardSummary", cds, ".html","</a>")) %>%
+    select(schoolname, districtname, studentgroups, url)
            
 
 
 
 
 write_csv(atsi.cde.mry.michelle, "atsi list michelle.csv")
+
+
+write_rds(atsi.cde.mry.michelle, "atsi list michelle.rds")

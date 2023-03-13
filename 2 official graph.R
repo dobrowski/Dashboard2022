@@ -423,19 +423,32 @@ doc <-    school_dir %>%
 
 
 
-indicator.bar(dash.mry, "Carmel", "chronic")
+indicator.bar(dash.mry, "Spreckels", "chronic")
 
-indicator.bar(dash.mry, "North Monterey", "grad")
+ggsave(here("figs",paste0("Spreckles - Chronic.png")), width = 16, height = 9)
 
-indicator.bar(dash.mry, "Salinas Union", "susp")
+# indicator.bar(dash.mry, "Spreckels", "grad")
+# 
+# 
+# ggsave(here("figs",paste0("Spreckles - Chronic.png")), width = 16, height = 9)
+
+indicator.bar(dash.mry, "Spreckels", "susp")
+
+ggsave(here("figs",paste0("Spreckles - Suspension.png")), width = 16, height = 9)
+
+indicator.bar(dash.mry, "Spreckels", "math")
+
+ggsave(here("figs",paste0("Spreckles - Math.png")), width = 16, height = 9)
+
+indicator.bar(dash.mry, "Spreckels", "ela")
+
+ggsave(here("figs",paste0("Spreckles - ELA.png")), width = 16, height = 9)
 
 
-indicator.bar(dash.mry, "Carmel", "math")
+indicator.bar(dash.mry, "Spreckels", "elpi")
 
 
-indicator.bar(dash.mry, "Santa Rita", "ela")
-
-
+ggsave(here("figs",paste0("Spreckles - ELPI.png")), width = 16, height = 9)
 
 
 ### Save all -----
