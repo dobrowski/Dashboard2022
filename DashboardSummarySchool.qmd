@@ -9,7 +9,7 @@ editor: visual
 toc: true
 toc-location: left
 params:
-    dist: '27661592734556'
+    dist: '27659876026025'
 ---
 
 ```{r}
@@ -106,7 +106,6 @@ studentgroup.tbl <- tribble(
 )
 
 ```
-
 
 ```{r}
 #| include: false
@@ -321,7 +320,6 @@ atsi.joint <- atsi.cde.mry %>%
     select(cds, schoolname, definition, atsi.reason, starts_with("status"))
     
 ```
-
 
 ```{r}
 #| include: false
@@ -621,7 +619,7 @@ dash.graph.da(dist.name)
 
 ```
 
-For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall. 
+For `r school.name`, the below graph shows how at the school level their student groups did at the school level which contributed to `r dist.name` as an LEA overall.
 
 Note this graph also includes student groups with 11 to 29 students in them to provide a fuller picture even if those groups are not used for state accountability calculations such as CSI/ATSI.
 
@@ -637,11 +635,9 @@ dash2 %>%
     dash.graph(dist.name, school.name) 
 ```
 
-
 ## CSI/ATSI Designations
 
-
-Under ESSA, schools can be identified for Comprehensive Support and Improvement (CSI) or  Additional Targeted Support and Improvement (ATSI). CSI is based on a school's overall or All Students indicators, whereas ATSI is based on each student group's indicators. For more information please see: [CDE School Support](https://www.cde.ca.gov/sp/sw/t1/schoolsupport.asp).  It is important to note that calculations are only based on student groups with 30 or more students, which means not all the indicators on the previous graph will be used. 
+Under ESSA, schools can be identified for Comprehensive Support and Improvement (CSI) or Additional Targeted Support and Improvement (ATSI). CSI is based on a school's overall or All Students indicators, whereas ATSI is based on each student group's indicators. For more information please see: [CDE School Support](https://www.cde.ca.gov/sp/sw/t1/schoolsupport.asp). It is important to note that calculations are only based on student groups with 30 or more students, which means not all the indicators on the previous graph will be used.
 
 `r if_else(cds.school %in% c("27102722730265","27659876026025", "27661590124610", "27661592734481"), "This school is eligible for CSI."  ,  "This school is not eligible for CSI."  )`
 
@@ -709,9 +705,7 @@ atsi.tbl <- atsi.joint %>%
 
 ```
 
-
 `r if (length( atsi.tbl$definition) == 0) {"There are no student groups at this school that are eligible for ATSI."}`
-
 
 ## Status Details for all Indicators
 
@@ -753,7 +747,7 @@ print(p)
 
 ## Historical Graphs for Eligible Groups
 
-These graphs represent all of the indicators from Priority Areas that qualified the district for DA or school for ATSI.  They included all DA qualifying student groups and student groups qualify for ATSI on each graph, whether this was a qualifying indicator or not. In addition, the All Students group is included in all graphs for comparisons.
+These graphs represent all of the indicators from Priority Areas that qualified the district for DA or school for ATSI. They included all DA qualifying student groups and student groups qualify for ATSI on each graph, whether this was a qualifying indicator or not. In addition, the All Students group is included in all graphs for comparisons.
 
 <details>
 

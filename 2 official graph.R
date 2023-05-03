@@ -83,6 +83,15 @@ import_files <- function(dir,globy,naming){
 
 ### Using the SQL tables ----
 
+# dash2 <- read_rds("dash-all-2022.rds") %>%
+#     mutate(indicator2 = recode(indicator,
+#                                "ela" = "<br><img src='icons/1ela.png' width='40' /><br>4 -  ELA",
+#                                "math" = "<br><img src='icons/2math.png' width='40' /><br>4 -  Math",
+#                                "elpi" = "<br><img src='icons/3elpi.png' width='40' /><br>4 - ELPI",
+#                                "grad" = "<br><img src='icons/4grad.png' width='40' /><br>5 - Grad",
+#                                "chronic" = "<br><img src='icons/5chronic.png' width='40' /><br>5 - Chronic <br>Absenteeism",
+#                                "susp" = "<br><img src='icons/6suspend.png' width='40' /><br>6 - Suspension"
+#     ))
 
 dash2 <- tbl(con,"DASH_ALL_2022") %>%
     collect () %>%
@@ -386,9 +395,11 @@ doc <-    school_dir %>%
                labby = case_when(indie == "math" ~ as.character(currstatus),
                                  indie == "ela" ~ as.character(currstatus),
                                  TRUE ~ percent(accuracy = 0.1, x = currstatus/100)),
-               labby.col = ifelse(statuslevel < 4, "white", "black")
+               labby.col = ifelse(statuslevel < 4, "white", "black"),
+               studentgroup.long.count = paste0(studentgroup.long," (",currdenom,")")
+               
                ) %>%
-        ggplot( aes(x = reorder(studentgroup.long, currstatus ),
+        ggplot( aes(x = reorder(studentgroup.long.count, currstatus ),
                     y = currstatus,
                     fill = factor(statuslevel, levels = c("1","2","3","4","5")),
                     label = labby)
@@ -403,20 +414,21 @@ doc <-    school_dir %>%
         ggplot2::theme(plot.title.position = "plot",
                        plot.title = element_markdown(size = 15)) +
         scale_color_manual(guide = "none", values = bw.pal) +
-        scale_fill_manual(values = purp.pal,
-                          drop = FALSE) +
+         scale_fill_manual(values = purp.pal,
+                           drop = FALSE) +
         labs(title = paste0(tit," by Student Group for ",dist),
              subtitle = subtit,
              x = "",
              y = ""
         )  +
-        guides(fill = guide_legend(title = "Dashboard Status \nCell Phone Bars",
-                                   title.position = "top",
-                                   title.hjust = .5,
-                                   label.position = "bottom",
-                                   nrow = 1)
-        ) +
-        theme(legend.key.size = unit(2, 'cm' ))
+        theme(legend.position="none")
+        # guides(fill = guide_legend(title = "Dashboard Status \nCell Phone Bars",
+        #                            title.position = "top",
+        #                            title.hjust = .5,
+        #                            label.position = "bottom",
+        #                            nrow = 1)
+        # ) +
+        # theme(legend.key.size = unit(2, 'cm' ))
     
 }
 
@@ -425,7 +437,7 @@ doc <-    school_dir %>%
 
 indicator.bar(dash.mry, "Spreckels", "chronic")
 
-ggsave(here("figs",paste0("Spreckles - Chronic.png")), width = 16, height = 9)
+ggsave(here("figs",paste0("Spreckles - Chronic.png")), width = 7, height = 5)
 
 # indicator.bar(dash.mry, "Spreckels", "grad")
 # 
@@ -502,22 +514,4 @@ run.everything("Santa Rita")
 
 
 
-
-### Cowplot -----
-
-
-library(cowplot)
-
-p <- dash.graph(dash.mry,"Santa Rita") +
-    guides(fill = "none")
-
-ggdraw() + 
-    draw_plot(p) +
-    draw_image(
-        "legend.png", x = 0, y = 0, hjust = 0, vjust = 0, halign = 0, valign = 0,
-        width = 0.15
-    )
-
-
-
-ggsave(here("figs", "Santa Rita", paste0("Santa Rita"," "," Dashboard cowplot.png")), width = 8, height = 6)
+run.everything("Spreckels")
